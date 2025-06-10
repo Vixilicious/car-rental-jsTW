@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Rental Service</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="logo">Wigells Car Rental</div>
+      <ul class="nav-links">
+        <li><a data-page="home" class="page-link active">Home</a></li>
+        <li><a data-page="cars" class="page-link">Cars</a></li>
+        <li id="my-pages-nav-item" class="hidden">
+          <a data-page="my-pages" class="page-link" id="user-link">My Pages</a>
+        </li>
+        <li id="login-nav-item">
+          <a data-page="login" class="page-link">Login</a>
+        </li>
+        <li id="admin-nav-item" class="hidden">
+          <a data-page="admin" class="page-link">Admin</a>
+        </li>
+        <li>
+          <a data-page="about" class="page-link" id="about-link">About</a>
+        </li>
+      </ul>
+      <!-- <div class="user-status">
+        <div class="welcome-msg" id="welcome-message">
+          Welcome, <span id="username-nav">Vixilicious</span>!
+        </div>
+        <div id="auth-links">
+          <a data-page="login" class="btn login-btn">Login</a>
+          <a data-page="register" class="btn register-btn">Register</a>
+        </div>
+      </div> -->
+      <button class="hidden" id="logout-btn">Logout</button>
+    </nav>
+    <!-- <div class="sub-navbar">
+      <p class="sub-text">Want to be a part of our journey? Register for our 
+        <span class="sub-highlight">newsletter</span> and get exclusive offers!
+      </p>
+    </div> -->
+
+    <!-- Main Content Area -->
+    <div class="scrollable-content">
+      <main class="main-content">
+        <!-- HOME PAGE -->
+        <section id="home-section" class="page-section active">
+          <div class="hero">
+            <h1>Premium Car Rental Service</h1>
+            <p>
+              Drive in style with our wide selection of vehicles. Affordable
+              rates, easy booking, and exceptional service.
+            </p>
+            <div>
+              <a data-page="cars" class="btn btn-primary">Browse Cars</a>
+              <a
+                data-page="login"
+                id="get-started-btn"
+                class="btn btn-secondary"
+                >Get Started</a
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- CARS PAGE -->
+        <section id="cars-section" class="page-section">
+          <h1>Available Cars</h1>
+          <div class="filter-cars-container">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search cars by name or model..."
+            />
+            <label for="sort-select"><strong>Sort by:</strong></label>
+            <select id="sort-select">
+              <option value="none">Default</option>
+              <option value="price">Price (Low to High)</option>
+              <option value="name">Alphabetical (A-Z)</option>
+            </select>
+            <button id="clear-filters" class="filter-button">
+              Clear Filters
+            </button>
+          </div>
+
+          <div class="car-container" id="car-container">
+            <!-- <div class="car-card">
+              <img class="car-image" src="" alt="">
+              <div class="car-info">
+                <p class="car-name"></p>
+                <p class="car-model"></p>
+                <p class="car-price"></p>
+                  <div class="car-features">
+                    <p class="feature-1"></p>
+                    <p class="feature-2"></p>
+                    <p class="feature-3"></p>
+                  </div>
+              </div>
+              <button class="rent-button">Rent Now</button>
+              </div> -->
+          </div>
+          <p class="hidden" id="login-check">
+            You need to be logged in to make a booking.
+
+            <a href="#" data-page="login" id="login-here" class="page-link">
+              Login here!</a
+            >
+          </p>
+        </section>
+
+        <!-- BOOKING PAGE -->
+        <section id="booking-section" class="page-section">
+          <div class="container" id="main-container">
+            <div id="alert-box" class="alert"></div>
+
+            <div class="user-info">
+              <div>
+                Logged in as:
+                <strong id="username-display">user?</strong> | Date:
+                <span id="current-date">2025-05-12 07:07:58</span>
+              </div>
+              <!-- <div class="booking-details">
+                Selected Car ID:
+                <strong id="car-id-display">Loading...</strong> | Your Bookings:
+                <strong id="booking-count">0</strong>
+              </div> -->
+            </div>
+
+            <div class="selected-car-container" id="selected-car-container">
+              <!-- <img src="" alt="Car" class="car-image" id="car-image" />
+              <div class="car-info">
+                <h2 id="car-name">Loading car details...</h2>
+                <p id="car-type">Retrieving information...</p>
+                <div class="car-price" id="car-price">SEK 0 / day</div>
+              </div> -->
+            </div>
+
+            <!-- <form id="booking-form">
+              <div class="date-picker">
+                <div class="form-group">
+                  <label for="fromDate">From Date</label>
+                  <input type="date" id="fromDate" name="fromDate" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="toDate">To Date</label>
+                  <input type="date" id="toDate" name="toDate" required />
+                </div>
+              </div>
+
+              <div class="price-summary">
+                <div class="price-row">
+                  <span>Daily Rate:</span>
+                  <span id="daily-rate">SEK 0</span>
+                </div>
+                <div class="price-row">
+                  <span>Number of Days:</span>
+                  <span id="num-days">1</span>
+                </div>
+                <div class="price-row price-total">
+                  <span>Total Price:</span>
+                  <span id="total-price">SEK 0</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-book"
+                id="book-button"
+                onclick="handleBooking()"
+              >
+                Book these dates
+              </button>
+            </form> -->
+          </div>
+        </section>
+
+        <!-- USER PAGE -->
+        <section id="my-pages-section" class="page-section">
+          <div id="my-bookings">
+            <h2>My Pages</h2>
+            <div class="user-container">
+              <div class="user-info">
+                <div class="user-details">
+                  <h3>Account Information</h3>
+                  <p id="user-name"></p>
+                  <p id="user-email"></p>
+                  <p id="user-phone"></p>
+                  <p id="user-username"></p>
+                  <button class="edit-user-info"></button>
+                </div>
+              </div>
+            </div>
+            <div id="booking-container">
+              <p>Loading your bookings...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- LOGIN PAGE -->
+        <section id="login-section" class="page-section">
+          <div class="flex-container">
+            <div class="login-container">
+              <div class="login-header">
+                <h2>Sign In</h2>
+              </div>
+
+              <div class="form-container">
+                <div id="login-alert" class="alert"></div>
+
+                <form id="login-form">
+                  <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      placeholder="Enter your username"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                  <div id="login-result"></div>
+                  <button type="submit" id="login-button">Sign In</button>
+                </form>
+
+                <div class="register-link">
+                  Don't have an account?
+                  <a data-page="register" class="page-link">Register here!</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- REGISTER PAGE -->
+        <section id="register-section" class="page-section">
+          <div class="flex-container">
+            <div class="registration-container">
+              <div class="register-header">
+                <h2>Create an Account</h2>
+              </div>
+
+              <div class="form-container">
+                <div id="registration-alert" class="alert"></div>
+
+                <form id="registration-form">
+                  <!-- Name fields (first and last name) -->
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="firstName">First Name</label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        placeholder="Enter first name"
+                        required
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label for="lastName">Last Name</label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Enter last name"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Username field -->
+                  <div class="form-group">
+                    <label for="username-register">Username</label>
+                    <input
+                      type="text"
+                      id="username-register"
+                      name="username"
+                      placeholder="Choose a username"
+                      required
+                    />
+                    <div class="input-info">
+                      Username must be 3-20 characters
+                    </div>
+                  </div>
+
+                  <!-- Phone field -->
+                  <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+
+                  <!-- Email field -->
+                  <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="Enter your email address"
+                      required
+                    />
+                  </div>
+
+                  <!-- Password fields -->
+                  <div class="form-group">
+                    <label for="password-register">Password</label>
+                    <input
+                      type="password"
+                      id="password-register"
+                      name="password"
+                      placeholder="Create a password"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input
+                      type="password"
+                      id="confirm-password"
+                      name="confirm-password"
+                      placeholder="Confirm your password"
+                      required
+                    />
+                  </div>
+
+                  <button type="submit" id="register-button">
+                    Create Account
+                  </button>
+                </form>
+
+                <div class="login-link">
+                  Already have an account?
+                  <a data-page="login">Login here</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-container">
+          <div class="footer-content">
+            <p class="copyright">Copyright &copy; 2025 Wigell Concernens AB</p>
+            <p class="contact">
+              Email: info@wigellcars.se | Phone: +46 8 123 456
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Include the app script -->
+    <script src="app.js" defer></script>
+  </body>
+</html>
