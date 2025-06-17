@@ -67,7 +67,6 @@ async function loginHandler() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ username, password }),
-      credentials: "include",
     });
 
     if (!response.ok) {
@@ -78,6 +77,7 @@ async function loginHandler() {
     console.log(data);
 
     // Store user details in sessionStorage
+    sessionStorage.setItem("token", data.token);
     sessionStorage.setItem("username", username);
     sessionStorage.setItem("userId", data.userId); // Store userId
     sessionStorage.setItem("isAdmin", data.isAdmin);
@@ -281,24 +281,29 @@ function displayCars(cars) {
       (car) =>
         `
       <div class="car-card">
-      <img class="car-image" src="${
-        car.image ? `data:image/jpeg;base64,${car.image}` : car.imageUrl
-      }" alt="${car.name}"/>
-      <div class="car-info">
-        <p class="car-name">${car.name}</p>
-        <p class="car-model">${car.model}</p>
-        <p class="car-price">SEK ${car.price} / day</p>
-        <div class="car-features">
-          <p class="feature-1">${car.feature1 || ""}</p>
-          <p class="feature-2">${car.feature2 || ""}</p>
-          <p class="feature-3">${car.feature3 || ""}</p>
+        <img class="car-image" src="${
+          car.image ? `data:image/jpeg;base64,${car.image}` : car.imageUrl
+        }" alt="${car.name}"/>
+        <div class="car-info">
+          <p class="car-name">${car.name}</p>
+          <p class="car-model">${car.model}</p>
+          <div class="car-features-container">
+          <p> Features: </p>
+          <div class="car-features">
+          <p class="car-feature feature-1">${car.feature1 || ""}</p>
+          <p class="car-feature feature-2">${car.feature2 || ""}</p>
+          <p class="car-feature feature-3">${car.feature3 || ""}</p>
+          </div>
+          </div>
+          <div class="car-bottom-row">
+            <p class="car-price">SEK ${car.price}/day</p>
+            <button class="rent-button" onclick="handleRentCar(${
+              car.id
+            })">Rent Now</button>
+          </div>
         </div>
+        <div class="message-container" id="msg-${car.id}"></div>
       </div>
-      <button class="rent-button" onclick="handleRentCar(${
-        car.id
-      })">Rent Now</button>
-      <div class="message-container" id="msg-${car.id}"></div>
-    </div>
       `
     )
     .join("");
@@ -519,14 +524,16 @@ async function handleBooking() {
       active: true,
     };
 
+    const token = sessionStorage.getItem("token");
+
     // Make the booking request
     const response = await fetch(`${BASE_URL}/bookings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(bookingData),
-      credentials: "include",
     });
 
     // Check if the request was successful
@@ -538,7 +545,11 @@ async function handleBooking() {
     }
 
     // Parse the response data
-    const bookingResponse = await response.json();
+    //     let bookingResponse = null;
+    // const responseText = await response.text();
+    // if (responseText) {
+    //   bookingResponse = JSON.parse(responseText);
+    // }
 
     // Show success message
     const container = document.getElementById("selected-car-container");
@@ -556,10 +567,8 @@ async function handleBooking() {
       </div>
     `;
 
-    // Clear the selected car from localStorage since booking is complete
+    // Clear the selected car from sessionStorage when booking is complete.
     localStorage.removeItem("selectedCar");
-
-    return bookingResponse;
   } catch (error) {
     console.error("Booking error:", error);
 
