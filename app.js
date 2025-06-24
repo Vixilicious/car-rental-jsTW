@@ -79,7 +79,7 @@ async function loginHandler() {
     // Store user details in sessionStorage
     sessionStorage.setItem("token", data.token);
     sessionStorage.setItem("username", username);
-    sessionStorage.setItem("userId", data.userId); // Store userId
+    // sessionStorage.setItem("userId", data.userId); // Store userId
     sessionStorage.setItem("isAdmin", data.isAdmin);
     navLinkLoginStatus();
 
