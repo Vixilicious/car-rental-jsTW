@@ -12,13 +12,11 @@ function navigateTo(sectionId) {
       return fetchCars();
     } else if (sectionId === "booking-section") {
       bookingHandler();
+    } else if (sectionId === "my-pages-section") {
+      completeBookings();
+    } else if (sectionId === "admin-section") {
+      fetchClients(); // You may want to pass a clientId later
     }
-    // else {
-    //   const defaultSection = document.getElementById("home-section");
-    //   if (defaultSection) {
-    //     defaultSection.classList.add("active");
-    //   }
-    // }
   }
 }
 
@@ -81,15 +79,20 @@ async function loginHandler() {
     sessionStorage.setItem("username", username);
     // sessionStorage.setItem("userId", data.userId); // Store userId
     sessionStorage.setItem("isAdmin", data.isAdmin);
+    console.log(
+      "isAdmin in sessionStorage:",
+      sessionStorage.getItem("isAdmin")
+    );
     navLinkLoginStatus();
+    showAdminPage();
 
     setTimeout(() => {
-      const redirect = localStorage.getItem("postLoginRedirect");
+      const redirect = sessionStorage.getItem("postLoginRedirect");
       if (
         redirect === "booking-section" &&
-        localStorage.getItem("selectedCar")
+        sessionStorage.getItem("selectedCar")
       ) {
-        localStorage.removeItem("postLoginRedirect");
+        sessionStorage.removeItem("postLoginRedirect");
         navigateTo("booking-section");
       } else {
         navigateTo("home-section");
@@ -120,26 +123,33 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 
 function navLinkLoginStatus() {
   const isLoggedIn = !!sessionStorage.getItem("username");
+  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
   const myPagesNav = document.getElementById("my-pages-nav-item");
+  const adminNav = document.getElementById("admin-nav-item");
   const loginNav = document.getElementById("login-nav-item");
   const logoutNav = document.getElementById("logout-btn");
   const rentLoginCheck = document.getElementById("login-check");
 
   if (isLoggedIn) {
-    myPagesNav?.classList.remove("hidden");
+    if (isAdmin) {
+      adminNav?.classList.remove("hidden");
+      myPagesNav?.classList.add("hidden");
+    } else {
+      myPagesNav?.classList.remove("hidden");
+      adminNav?.classList.add("hidden");
+    }
     loginNav?.classList.add("hidden");
     logoutNav?.classList.remove("hidden");
-    rentLoginCheck?.classList.add("hidden"); //TODO: Use hide/show elements
+    rentLoginCheck?.classList.add("hidden");
   } else {
     myPagesNav?.classList.add("hidden");
+    adminNav?.classList.add("hidden");
     loginNav?.classList.remove("hidden");
     logoutNav?.classList.add("hidden");
   }
 }
 
 function showElement(element) {
-  // console.log(element);
-  //TODO: Use hide/show elements (rent button message login)
   if (!element) return;
   const isHidden = element.classList.contains("hidden");
   if (isHidden) element.classList.remove("hidden");
@@ -149,6 +159,99 @@ function hideElement(element) {
   if (!element) return;
   const isHidden = element.classList.contains("hidden");
   if (!isHidden) element.classList.add("hidden");
+}
+
+//admin test
+function showAdminPage() {
+  const myPagesNav = document.getElementById("my-pages-nav-item");
+  const adminNav = document.getElementById("admin-nav-item");
+  hideElement(myPagesNav);
+  hideElement(adminNav);
+
+  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  console.log("isAdmin in sessionStorage:", sessionStorage.getItem("isAdmin"));
+  if (isAdmin) {
+    showElement(adminNav);
+    hideElement(myPagesNav);
+    fetchClients(); // Fetch and show client/user info and bookings
+  } else {
+    showElement(myPagesNav);
+    hideElement(adminNav);
+    completeBookings();
+  }
+}
+
+function displayClients(clients) {
+  const clientsContainer = document.getElementById("client-bookings");
+  if (clients.length === 0) {
+    clientsContainer.innerHTML = "<p>No bookings found.</p>";
+    return;
+  }
+  clientsContainer.innerHTML = clients
+    .sort((a, b) => a.username.localeCompare(b.username))
+    .map(
+      (user) => `
+        
+          <div class="user-card" style="cursor:pointer;" onclick="handleClientClick('${user.id}')">
+          <p><strong>Username:</strong> ${user.username}</p>
+        </div>
+  `
+    )
+    .join("");
+}
+
+function handleClientClick(userId) {
+  selectedClient = allUsers.find(
+    (client) => String(client.id) === String(userId)
+  );
+  if (selectedClient) {
+    sessionStorage.setItem("selectedClient", JSON.stringify(selectedClient));
+    displayClientInfo();
+  }
+}
+
+function displayClientInfo() {
+  const clientData = sessionStorage.getItem("selectedClient");
+  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  const clientContainer = document.getElementById("client-container");
+  if (isAdmin && clientData && clientContainer) {
+    const client = JSON.parse(clientData);
+    clientContainer.innerHTML = `
+      <div class="user-info-card">
+        <h3>User information</h3>
+        <p><strong>Username:</strong> ${client.username}</p>
+        <p><strong>Email:</strong> ${client.email}</p>
+        <p><strong>Phone:</strong> ${client.phone}</p>
+      </div>
+    `;
+  }
+}
+
+let allUsers = [];
+
+async function fetchClients() {
+  const token = sessionStorage.getItem("token");
+
+  try {
+    const response = await fetch(`${BASE_URL}/users`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch users: ${response.status}`);
+    }
+    allUsers = await response.json();
+    userId = allUsers.find((u) => u.id);
+    displayClients(allUsers);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
 }
 
 async function handleRegistration() {
@@ -259,10 +362,12 @@ async function fetchCars() {
 
     allCars = await response.json();
     displayCars(allCars);
-    //
+
+    return allCars;
   } catch (error) {
     console.error("Error fetching cars:", error);
     carContainer.innerHTML = `<span style="color: red;">Error fetching cars: ${error.message}</span>`;
+    return [];
   }
 }
 
@@ -284,19 +389,19 @@ function displayCars(cars) {
         <img class="car-image" src="${
           car.image ? `data:image/jpeg;base64,${car.image}` : car.imageUrl
         }" alt="${car.name}"/>
-        <div class="car-info">
+          <div class="car-info">
           <p class="car-name">${car.name}</p>
           <p class="car-model">${car.model}</p>
           <div class="car-features-container">
           <p> Features: </p>
           <div class="car-features">
-          <p class="car-feature feature-1">${car.feature1 || ""}</p>
-          <p class="car-feature feature-2">${car.feature2 || ""}</p>
-          <p class="car-feature feature-3">${car.feature3 || ""}</p>
+            <p class="car-feature feature-1">${car.feature1 || ""}</p>
+            <p class="car-feature feature-2">${car.feature2 || ""}</p>
+            <p class="car-feature feature-3">${car.feature3 || ""}</p>
           </div>
           </div>
           <div class="car-bottom-row">
-            <p class="car-price">SEK ${car.price}/day</p>
+            <p class="car-price">SEK ${car.price} <span> /day<span/></p>
             <button class="rent-button" onclick="handleRentCar(${
               car.id
             })">Rent Now</button>
@@ -349,23 +454,19 @@ function displayFilteredCars() {
 
 function handleRentCar(carId) {
   let selectedCar = allCars.find((car) => car.id === carId);
-  // let carContainer = document.getElementById("car-container");
   let rentError = document.getElementById("login-check");
 
   console.log("rentError element:", rentError);
-
-  // const messageContainer = document.getElementById(`msg-${carId}`);
 
   const isLoggedIn = !!sessionStorage.getItem("username");
 
   if (!isLoggedIn) {
     showElement(rentError);
-    // Store car-info so after login we know which car to book
-    localStorage.setItem("selectedCar", JSON.stringify(selectedCar));
-    localStorage.setItem("postLoginRedirect", "booking-section");
+    sessionStorage.setItem("selectedCar", JSON.stringify(selectedCar));
+    sessionStorage.setItem("postLoginRedirect", "booking-section");
   } else {
     hideElement(rentError);
-    localStorage.setItem("selectedCar", JSON.stringify(selectedCar));
+    sessionStorage.setItem("selectedCar", JSON.stringify(selectedCar));
     navigateTo("booking-section");
     console.log();
   }
@@ -373,7 +474,7 @@ function handleRentCar(carId) {
 
 function bookingHandler() {
   // Add this right before your booking fetch call
-  const carData = localStorage.getItem("selectedCar");
+  const carData = sessionStorage.getItem("selectedCar");
   const container = document.getElementById("selected-car-container");
 
   if (carData) {
@@ -499,7 +600,7 @@ async function handleBooking() {
     bookButton.textContent = "Processing...";
 
     // Get car data from localStorage
-    const carData = localStorage.getItem("selectedCar");
+    const carData = sessionStorage.getItem("selectedCar");
     if (!carData) {
       throw new Error("No car selected. Please select a car first.");
     }
@@ -544,14 +645,6 @@ async function handleBooking() {
       );
     }
 
-    // Parse the response data
-    //     let bookingResponse = null;
-    // const responseText = await response.text();
-    // if (responseText) {
-    //   bookingResponse = JSON.parse(responseText);
-    // }
-
-    // Show success message
     const container = document.getElementById("selected-car-container");
     container.innerHTML = `
       <div class="booking-success">
@@ -568,7 +661,7 @@ async function handleBooking() {
     `;
 
     // Clear the selected car from sessionStorage when booking is complete.
-    localStorage.removeItem("selectedCar");
+    sessionStorage.removeItem("selectedCar");
   } catch (error) {
     console.error("Booking error:", error);
 
@@ -605,4 +698,112 @@ function formatDate(dateStr) {
     day: "numeric",
   };
   return new Date(dateStr).toLocaleDateString(undefined, options);
+}
+
+let myBookings = [];
+
+async function fetchBookings() {
+  const token = sessionStorage.getItem("token");
+  const bookingsContainer = document.getElementById("bookings-container");
+  bookingsContainer.innerHTML = "Loading bookings...";
+
+  try {
+    console.log("About to fetch", `${BASE_URL}/bookings/me`);
+    const response = await fetch(`${BASE_URL}/bookings/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+    });
+    console.log("Bookings fetch response:", response);
+    if (!response.ok)
+      throw new Error(`Error fetching cars: ${response.status}`);
+
+    myBookings = await response.json();
+    // displayMyBookings(myBookings)
+
+    return myBookings;
+  } catch (error) {
+    console.error("Error fetching your bookings:", error);
+    bookingsContainer.innerHTML = `<span style="color: red;">Error fetching your bookings: ${error.message}</span>`;
+    return [];
+  }
+}
+
+async function completeBookings() {
+  allCars = await fetchCars();
+  myBookings = await fetchBookings();
+  displayMyBookings(myBookings, allCars);
+}
+
+function displayMyBookings(bookings, cars) {
+  const bookingsContainer = document.getElementById("bookings-container");
+  bookingsContainer.innerHTML = ""; // Clear previous content
+
+  if (!bookings.length) {
+    bookingsContainer.innerHTML = "<p>No bookings available.</p>";
+    return;
+  }
+
+  // Helper to format dates as e.g. "2025-07-02" => "Jul 2, 2025"
+  const formatDateShort = (dateStr) => {
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateStr).toLocaleDateString(undefined, options);
+  };
+
+  bookingsContainer.innerHTML = bookings
+    .map((booking) => {
+      const car = cars.find((car) => car.id === booking.carId);
+      if (!car) {
+        return `
+           <div class="booking-card">
+            <div class="car-info">
+              <p>Unavailable to view bookings.</p>
+            </div>
+          </div>
+          `;
+      }
+      const fromDate = booking.fromDate;
+      const toDate = booking.toDate;
+      return `
+           <div class="booking-card">
+          <div class="car-details">
+            <img class="car-image"
+              src="${
+                car.image ? `data:image/jpeg;base64,${car.image}` : car.imageUrl
+              }"
+              alt="${car.name}" />
+            <div class="car-info">
+              <h2 class="car-title">${car.name} ${car.model}</h2>
+              <p class="car-price">SEK ${car.price} / day</p>
+              <div class="car-features">
+                ${
+                  car.feature1
+                    ? `<span class="feature">${car.feature1}</span>`
+                    : ""
+                }
+                ${
+                  car.feature2
+                    ? `<span class="feature">${car.feature2}</span>`
+                    : ""
+                }
+                ${
+                  car.feature3
+                    ? `<span class="feature">${car.feature3}</span>`
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+          <div class="booking-info">
+            <p><strong>Booked from:</strong> ${formatDateShort(fromDate)}</p>
+            <p><strong>To:</strong> ${formatDateShort(toDate)}</p>
+            
+          </div>
+        </div>
+          `;
+    })
+    .join("");
 }
