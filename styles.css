@@ -253,7 +253,7 @@ img {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* === HOME PAGE === */
@@ -676,6 +676,78 @@ img {
 .register-link a:hover,
 .login-link a:hover {
   text-decoration: underline;
+}
+
+/* === ADMIN USER LIST FLEX CONTAINER === */
+.user-card-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  margin-bottom: 1.5rem;
+}
+
+/* === ADMIN USER CARD === */
+.user-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(34, 62, 89, 0.09);
+  padding: 1.2rem 2rem;
+  min-width: 220px;
+  max-width: 320px;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--primary-dark, #445266);
+  font-size: 1.1rem;
+}
+
+.user-card:hover,
+.user-card:focus {
+  box-shadow: 0 8px 32px rgba(45, 94, 130, 0.13);
+  border-color: var(--blue, #2d5e82);
+  transform: translateY(-2px) scale(1.025);
+  outline: none;
+  background: #f3f7fd;
+}
+
+/* === SELECTED USER INFO CARD CONTAINER === */
+.user-info-card-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-top: 2rem;
+}
+
+/* === SELECTED USER INFO CARD === */
+.user-info-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(68, 82, 102, 0.13);
+  padding: 2rem 2.5rem;
+  min-width: 280px;
+  max-width: 400px;
+  margin-right: 1.5rem;
+}
+
+.user-info-card h3 {
+  color: var(--blue, #2d5e82);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+.user-info-card p {
+  margin-bottom: 0.7rem;
+  color: var(--primary-dark, #445266);
+  font-size: 1.06rem;
+}
+
+.user-info-card strong {
+  color: var(--primary-light, #6d809d);
+  font-weight: 600;
 }
 
 /* === FOOTER === */

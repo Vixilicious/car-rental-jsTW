@@ -1,13 +1,19 @@
 const BASE_URL = "http://localhost:8080/api/v1";
 
 function navigateTo(sectionId) {
-  const sections = document.querySelectorAll(".page-section"); // Fixed class selector
-  sections.forEach((section) => section.classList.remove("active"));
+  const sections = document.querySelectorAll(".page-section"); // Select all section
+  console.log(sections);
+  sections.forEach((section) => {
+    section.classList.add("hidden"); // Hide all sections
+    section.classList.remove("active"); // Remove active class
+  });
 
   const activeSection = document.getElementById(sectionId);
   if (activeSection) {
-    activeSection.classList.add("active");
+    activeSection.classList.remove("hidden"); // Show the target section
+    activeSection.classList.add("active"); // Add active class
 
+    // Handle section-specific logic
     if (sectionId === "cars-section") {
       return fetchCars();
     } else if (sectionId === "booking-section") {
@@ -15,8 +21,10 @@ function navigateTo(sectionId) {
     } else if (sectionId === "my-pages-section") {
       completeBookings();
     } else if (sectionId === "admin-section") {
-      fetchClients(); // You may want to pass a clientId later
+      fetchClients(); // Fetch and show admin data
     }
+  } else {
+    console.error(`Section with ID "${sectionId}" not found.`);
   }
 }
 
@@ -96,7 +104,6 @@ async function loginHandler() {
         navigateTo("booking-section");
       } else {
         navigateTo("home-section");
-        // resultElement.textContent = "";
       }
     }, 1000);
   } catch (error) {
@@ -169,7 +176,6 @@ function showAdminPage() {
   hideElement(adminNav);
 
   const isAdmin = sessionStorage.getItem("isAdmin") === "true";
-  console.log("isAdmin in sessionStorage:", sessionStorage.getItem("isAdmin"));
   if (isAdmin) {
     showElement(adminNav);
     hideElement(myPagesNav);
@@ -182,7 +188,8 @@ function showAdminPage() {
 }
 
 function displayClients(clients) {
-  const clientsContainer = document.getElementById("client-bookings");
+  const clientsContainer = document.getElementById("client-list-container");
+
   if (clients.length === 0) {
     clientsContainer.innerHTML = "<p>No bookings found.</p>";
     return;
@@ -191,39 +198,133 @@ function displayClients(clients) {
     .sort((a, b) => a.username.localeCompare(b.username))
     .map(
       (user) => `
-        
+        <div>
           <div class="user-card" style="cursor:pointer;" onclick="handleClientClick('${user.id}')">
-          <p><strong>Username:</strong> ${user.username}</p>
+          <p> ${user.username}</p>
+        </div>
         </div>
   `
     )
     .join("");
 }
 
-function handleClientClick(userId) {
-  selectedClient = allUsers.find(
+async function handleClientClick(userId) {
+  const selectedClient = allUsers.find(
     (client) => String(client.id) === String(userId)
   );
   if (selectedClient) {
     sessionStorage.setItem("selectedClient", JSON.stringify(selectedClient));
-    displayClientInfo();
+    const cars = await fetchCars();
+    const orders = await fetchUserOrders();
+    displayClientInfo(cars, orders);
+  } else {
+    console.error("Client not found for userId:", userId);
   }
 }
 
-function displayClientInfo() {
+function showListView() {
+  const clientsContainer = document.getElementById("client-list-container");
+  const clientInfoContainer = document.getElementById("client-info-container");
+  const ordersContainer = document.getElementById("orders-info-container");
+  showElement(clientsContainer);
+  hideElement(clientInfoContainer);
+  hideElement(ordersContainer);
+}
+
+async function displayClientInfo(cars, orders) {
   const clientData = sessionStorage.getItem("selectedClient");
   const isAdmin = sessionStorage.getItem("isAdmin") === "true";
-  const clientContainer = document.getElementById("client-container");
-  if (isAdmin && clientData && clientContainer) {
+  const clientsContainer = document.getElementById("client-list-container");
+  const clientInfoContainer = document.getElementById("client-info-container");
+  const ordersContainer = document.getElementById("orders-info-container");
+
+  // Hide the client list and show the client info section
+  hideElement(clientsContainer);
+  showElement(clientInfoContainer);
+  showElement(ordersContainer);
+
+  // Helper to format dates
+  const formatDateShort = (dateStr) => {
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateStr).toLocaleDateString(undefined, options);
+  };
+
+  // Render client information
+  if (isAdmin && clientData) {
     const client = JSON.parse(clientData);
-    clientContainer.innerHTML = `
-      <div class="user-info-card">
-        <h3>User information</h3>
-        <p><strong>Username:</strong> ${client.username}</p>
-        <p><strong>Email:</strong> ${client.email}</p>
-        <p><strong>Phone:</strong> ${client.phone}</p>
+    console.log("Heres you ID :D", JSON.parse(clientData).id);
+    clientInfoContainer.innerHTML = `
+      <div>
+        <div class="user-info-card">
+          <h3>User Information</h3>
+          <p><strong>Username:</strong> ${client.username}</p>
+          <p><strong>Email:</strong> ${client.email}</p>
+          <p><strong>Phone:</strong> ${client.phone}</p>
+          <div class="user-card-actions">
+            <button class="edit-user-btn" onclick="deleteUser('${client.id}')">
+              Delete User
+            </button>
+            <button class="back-to-list-btn" onclick="showListView()">
+              Back to List
+            </button>
+          </div>
+        </div>
       </div>
     `;
+  }
+
+  // Render orders in the orders container
+  if (!orders || orders.length === 0) {
+    ordersContainer.innerHTML = "<p>No orders available.</p>";
+  } else {
+    ordersContainer.innerHTML = orders
+      .map((order) => {
+        const car = cars.find((car) => car.id === order.carId);
+        if (!car) {
+          return `
+          <div class="order-card">
+            <div class="car-order-info">
+              <p>Car information not available.</p>
+            </div>
+          </div>
+        `;
+        }
+        const fromDate = order.fromDate;
+        const toDate = order.toDate;
+        return `
+        <div class="order-card">
+          <div class="car-details">
+            
+            <div class="car-info">
+              <h2 class="car-title">${car.name} ${car.model}</h2>
+              <p class="car-price">SEK ${car.price} / day</p>
+              <div class="car-features">
+                ${
+                  car.feature1
+                    ? `<span class="feature">${car.feature1}</span>`
+                    : ""
+                }
+                ${
+                  car.feature2
+                    ? `<span class="feature">${car.feature2}</span>`
+                    : ""
+                }
+                ${
+                  car.feature3
+                    ? `<span class="feature">${car.feature3}</span>`
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+          <div class="order-info">
+            <p><strong>Booked from:</strong> ${formatDateShort(fromDate)}</p>
+            <p><strong>To:</strong> ${formatDateShort(toDate)}</p>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
   }
 }
 
@@ -236,8 +337,8 @@ async function fetchClients() {
     const response = await fetch(`${BASE_URL}/users`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       credentials: "include",
     });
@@ -246,10 +347,76 @@ async function fetchClients() {
       throw new Error(`Failed to fetch users: ${response.status}`);
     }
     allUsers = await response.json();
-    userId = allUsers.find((u) => u.id);
     displayClients(allUsers);
   } catch (error) {
     console.error("Error fetching users:", error);
+    return [];
+  }
+}
+
+// Delete user
+async function deleteUser(userId) {
+  if (
+    !confirm(
+      "Are you sure you want to delete this user? This cannot be undone."
+    )
+  )
+    return;
+  const token = sessionStorage.getItem("token");
+  try {
+    const response = await fetch(`${BASE_URL}/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (response.ok) {
+      alert("User deleted successfully.");
+      showListView();
+      fetchClients(); // Refresh the list
+    } else {
+      alert("Failed to delete user.");
+    }
+  } catch (err) {
+    alert("Error deleting user: " + err.message);
+  }
+}
+
+async function fetchUserOrders() {
+  const token = sessionStorage.getItem("token");
+  const selectedClient = JSON.parse(sessionStorage.getItem("selectedClient"));
+  if (!selectedClient || !selectedClient.id) {
+    console.error("No selected client found in sessionStorage.");
+    return [];
+  }
+
+  const userId = selectedClient.id;
+
+  try {
+    const response = await fetch(`${BASE_URL}/users/${userId}/orders`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch orders for user ${userId}: ${response.status}`
+      );
+    }
+
+    const orders = await response.json();
+    if (!orders || orders.length === 0) {
+      return [];
+    } else {
+      return orders;
+    }
+  } catch (error) {
     return [];
   }
 }
